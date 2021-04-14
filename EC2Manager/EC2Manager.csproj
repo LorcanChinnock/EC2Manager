@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Authors>Lorcan Chinnock</Authors>
+    <Company>Lorcan Chinnock</Company>
+    <Description>Small WPF application for easily managing simple EC2 tasks</Description>
+    <PackageLicenseExpression>Apache License, Version 2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.EC2" Version="3.7.4.2" />
+  </ItemGroup>
+
+</Project>
