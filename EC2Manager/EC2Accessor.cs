@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EC2Manager
 {
-    class EC2Accessor
+    internal class EC2Accessor
     {
         public IEnumerable<RegionEndpoint> availableRegions;
 
@@ -18,7 +18,7 @@ namespace EC2Manager
 
         public async Task StartEc2InstanceAndLog(ControlValues controlValues)
         {
-            var ec2Client = GetEc2Client((RegionEndpoint)controlValues.Region, controlValues.AccessKey, controlValues.SecretKey);
+            var ec2Client = GetEc2ClientWithControlValues(controlValues);
             Console.WriteLine($"Trying to start EC2 instance with params:\n{controlValues}");
             await StartEc2Instance(ec2Client, controlValues.InstanceId);
             Console.WriteLine("Instance started successfully");
@@ -26,7 +26,7 @@ namespace EC2Manager
 
         public async Task StopEc2InstanceAndLog(ControlValues controlValues)
         {
-            var ec2Client = GetEc2Client((RegionEndpoint)controlValues.Region, controlValues.AccessKey, controlValues.SecretKey);
+            var ec2Client = GetEc2ClientWithControlValues(controlValues);
             Console.WriteLine($"Trying to stop EC2 instance with params:\n{controlValues}");
             await StopEc2Instance(ec2Client, controlValues.InstanceId);
             Console.WriteLine("Instance stopped successfully");
@@ -34,7 +34,7 @@ namespace EC2Manager
 
         public async Task RestartEc2InstanceAndLog(ControlValues controlValues)
         {
-            var ec2Client = GetEc2Client((RegionEndpoint)controlValues.Region, controlValues.AccessKey, controlValues.SecretKey);
+            var ec2Client = GetEc2ClientWithControlValues(controlValues);
             Console.WriteLine($"Trying to restart EC2 instance with params:\n{controlValues}");
             await StopEc2Instance(ec2Client, controlValues.InstanceId).ContinueWith(_ => StartEc2Instance(ec2Client, controlValues.InstanceId));
             Console.WriteLine("Instance restarted successfully");
@@ -48,6 +48,8 @@ namespace EC2Manager
             });
         }
 
+        public RegionEndpoint GetRegionBySystemName(string regionSystemName) => RegionEndpoint.GetBySystemName(regionSystemName);
+
         private async Task StopEc2Instance(AmazonEC2Client client, string instanceId)
         {
             await client.StopInstancesAsync(new StopInstancesRequest
@@ -56,9 +58,6 @@ namespace EC2Manager
             });
         }
 
-        private AmazonEC2Client GetEc2Client(RegionEndpoint region, string accessKey, string secretKey)
-        {
-            return new AmazonEC2Client(accessKey, secretKey, region);
-        }
+        private AmazonEC2Client GetEc2ClientWithControlValues(ControlValues controlValues) => new AmazonEC2Client(controlValues.AccessKey, controlValues.SecretKey, GetRegionBySystemName(controlValues.RegionSystemName));
     }
 }

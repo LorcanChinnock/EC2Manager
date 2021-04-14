@@ -1,0 +1,1 @@
+Small WPF application for easily managing simple EC2 tasks

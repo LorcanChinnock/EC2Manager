@@ -4,6 +4,5 @@
              xmlns:local="clr-namespace:EC2Manager"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
     </Application.Resources>
 </Application>
