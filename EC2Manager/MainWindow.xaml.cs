@@ -1,6 +1,7 @@
 ﻿using Amazon;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -14,19 +15,23 @@ namespace EC2Manager
         private ControlPersistence<ControlValues> controlPersistence;
         private DispatcherTimer statusTimer;
 
-        private delegate void StartDelegate();
-        private delegate void StopDelegate();
-        private delegate void RestartDelegate();
-
         public MainWindow()
+        {
+            InitializeComponent();
+            Window.Dispatcher.InvokeAsync(async () =>
+            {
+                await Window_Initialized();
+            });
+        }
+
+        private async Task Window_Initialized()
         {
             ec2Accessor = new EC2Accessor();
             controlPersistence = new ControlPersistence<ControlValues>();
-            InitializeComponent();
             SetConsoleOutputter();
             SetRegionControlOptions();
-            LoadControlValuesIfAvailable();
-            StartStatusTimer();
+            await LoadControlValuesIfAvailable();
+            await StartStatusTimer();
         }
 
         private void SetConsoleOutputter()
@@ -38,52 +43,52 @@ namespace EC2Manager
         #region click handlers
         private void Start_Click(object sender, RoutedEventArgs e)
         {
-            StartButton.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new StartDelegate(() =>
+            StartButton.Dispatcher.InvokeAsync(async () =>
             {
                 try
                 {
-                    var controlValues = GetControlValuesFromControls();
+                    var controlValues = await GetControlValuesFromControls();
                     ec2Accessor.StartEc2InstanceAndLog(controlValues);
-                    StartStatusTimer();
+                    await StartStatusTimer();
                 }
                 catch (Exception error)
                 {
                     Console.WriteLine(error.Message);
                 }
-            }));
+            }, DispatcherPriority.Normal);
         }
 
         private void Stop_Click(object sender, RoutedEventArgs e)
         {
-            StopButton.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new StopDelegate(() =>
+            StopButton.Dispatcher.InvokeAsync(async () =>
             {
                 try
                 {
-                    var controlValues = GetControlValuesFromControls();
+                    var controlValues = await GetControlValuesFromControls();
                     ec2Accessor.StopEc2InstanceAndLog(controlValues);
-                    StartStatusTimer();
+                    await StartStatusTimer();
                 }
                 catch (Exception error)
                 {
                     Console.WriteLine(error.Message);
                 }
-            }));
+            }, DispatcherPriority.Normal);
         }
         #endregion
 
         #region status polling
-        private void StartStatusTimer()
+        private async Task StartStatusTimer()
         {
-            StatusDispatchAction(this, null);
+            await StatusDispatchAction(this, null);
             statusTimer = new DispatcherTimer();
-            statusTimer.Tick += new EventHandler(StatusDispatchAction);
+            statusTimer.Tick += async (s,e) => { await StatusDispatchAction(s, e); };
             statusTimer.Interval = new TimeSpan(0, 0, 30);
             statusTimer.Start();
         }
 
-        private void StatusDispatchAction(object sender, EventArgs e)
+        private async Task StatusDispatchAction(object sender, EventArgs e)
         {
-            var controlValues = GetControlValuesFromControls();
+            var controlValues = await GetControlValuesFromControls();
             LoadingSpinner.Visibility = Visibility.Visible;
             var result = ec2Accessor.GetInstanceState(controlValues);
             LoadingSpinner.Visibility = Visibility.Hidden;
@@ -114,7 +119,7 @@ namespace EC2Manager
             SecretKey.Text = controlValues.SecretKey;
         }
 
-        private ControlValues GetControlValuesFromControls()
+        private async Task<ControlValues> GetControlValuesFromControls()
         {
             var controlValues = new ControlValues
             {
@@ -124,13 +129,13 @@ namespace EC2Manager
                 SecretKey = SecretKey.Text.Trim()
             };
             controlValues.Validate();
-            controlPersistence.Write(controlValues);
+            await controlPersistence.Write(controlValues);
             return controlValues;
         }
 
-        private void LoadControlValuesIfAvailable()
+        private async Task LoadControlValuesIfAvailable()
         {
-            var controlValues = controlPersistence.Read();
+            var controlValues = await controlPersistence.Read();
             if (controlValues != null)
             {
                 SetControlFromControlValues(controlValues);

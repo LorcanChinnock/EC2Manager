@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace EC2Manager
 {
@@ -13,22 +14,18 @@ namespace EC2Manager
             _filePath = GetLocalFilePath();
         }
 
-        public void Write(T objectToWrite, bool append = false)
+        public async Task Write(T objectToWrite, bool append = false)
         {
             using Stream stream = File.Open(_filePath, FileMode.OpenOrCreate);
-            var binaryFormatter = new BinaryFormatter();
-            binaryFormatter.Serialize(stream, objectToWrite);
-            stream.Close();
+            await JsonSerializer.SerializeAsync(stream, objectToWrite);
         }
 
-        public T Read()
+        public async Task<T> Read()
         {
             using Stream stream = File.Open(_filePath, FileMode.OpenOrCreate);
-            var binaryFormatter = new BinaryFormatter();
             try
             {
-                var deserializedObject = (T)binaryFormatter.Deserialize(stream);
-                return deserializedObject;
+                return await JsonSerializer.DeserializeAsync<T>(stream);
             }
             catch
             {
@@ -38,7 +35,7 @@ namespace EC2Manager
 
         private static string GetLocalFilePath()
         {
-            var fileName = "ControlValues.bin";
+            var fileName = "ControlValues.json";
             string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             return Path.Combine(projectPath, fileName);
         }
