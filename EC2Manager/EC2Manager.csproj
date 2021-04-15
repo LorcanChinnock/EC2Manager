@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.EC2" Version="3.7.4.2" />
+    <PackageReference Include="LoadingSpinner.WPF" Version="1.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
