@@ -14,7 +14,7 @@ jobs:
       matrix:
         configuration: [Release]
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
+    runs-on: ubuntu-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
     env:
@@ -60,4 +60,5 @@ jobs:
       uses: TheDoctor0/zip-release@0.4.1
       with:
         filename: release.zip
+        token: ${{ secrets.GITHUB_TOKEN }}
         path: ${{ env.Wap_Project_Directory }}\bin\${{ matrix.configuration }}\net5.0-windows
