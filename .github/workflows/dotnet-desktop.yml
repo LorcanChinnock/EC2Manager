@@ -14,7 +14,7 @@ jobs:
       matrix:
         configuration: [Release]
 
-    runs-on: ubuntu-latest  # For a list of available runner types, refer to
+    runs-on: windows-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
     env:
@@ -54,11 +54,21 @@ jobs:
       run: msbuild $env:Wap_Project_Path /p:Configuration=$env:Configuration
       env:
         Configuration: ${{ matrix.configuration }}
-
-    # Zip artifacts and create release
-    - name: Zip artifacts and create release
-      uses: TheDoctor0/zip-release@0.4.1
+        
+    # Zip artifacts into release.zip
+    - name: Zip artifacts into release.zip
+      uses: Amadevus/pwsh-script@v2
+      id: zip-script
       with:
-        filename: release.zip
-        token: ${{ secrets.GITHUB_TOKEN }}
-        path: ${{ env.Wap_Project_Directory }}\bin\${{ matrix.configuration }}\net5.0-windows
+        script: 'Compress-Archive -Path D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows -DestinationPath D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows\release'
+        
+    # Publish zip as release
+    - name: Publish zip as release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "Release"
+          files: |
+            D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows\release.zip
