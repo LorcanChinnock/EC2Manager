@@ -61,8 +61,7 @@ jobs:
       id: zip-script
       with:
         script: |
-          Compress-Archive -Path D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows -DestinationPath D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows\release
-          ls D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows
+          Compress-Archive -Path D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows -DestinationPath D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows\release.zip
         
     # Publish zip as release
     - name: Publish zip as release
