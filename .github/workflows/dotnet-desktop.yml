@@ -51,6 +51,12 @@ jobs:
         
     - name: Create archive
       run: Compress-Archive -Path D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows\* -DestinationPath D:\a\EC2Manager\EC2Manager\EC2Manager\bin\Release\net5.0-windows\EC2Manager.zip    
+    
+    - name: Generate build number
+      id: buildnumber
+      uses: einaregilsson/build-number@v3 
+      with:
+        token: ${{secrets.github_token}}   
         
     - name: Create release
       id: create_release
@@ -58,6 +64,7 @@ jobs:
       with:
         artifacts: "D:\\a\\EC2Manager\\EC2Manager\\EC2Manager\\bin\\Release\\net5.0-windows\\EC2Manager.zip"
         token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ steps.buildnumber.outputs.build_number }}
 
     - name: Update release asset
       id: upload-release-asset
