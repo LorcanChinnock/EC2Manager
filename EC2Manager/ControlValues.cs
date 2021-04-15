@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text.Json;
 
 namespace EC2Manager
 {
@@ -10,11 +9,6 @@ namespace EC2Manager
         public string RegionSystemName { get; init; }
         public string AccessKey { get; init; }
         public string SecretKey { get; init; }
-
-        public override string ToString()
-        {
-            return JsonSerializer.Serialize(this);
-        }
 
         public void Validate()
         {

@@ -18,23 +18,23 @@ namespace EC2Manager
         public void StartEc2InstanceAndLog(ControlValues controlValues)
         {
             var ec2Client = GetEc2ClientWithControlValues(controlValues);
-            Console.WriteLine($"Trying to start EC2 instance with params:\n{controlValues}");
+            Console.WriteLine($"Trying to start EC2 instance {controlValues.InstanceId}");
             StartEc2Instance(ec2Client, controlValues.InstanceId);
-            Console.WriteLine("Instance started successfully");
+            Console.WriteLine($"Instance {controlValues.InstanceId} started successfully");
         }
 
         public void StopEc2InstanceAndLog(ControlValues controlValues)
         {
             var ec2Client = GetEc2ClientWithControlValues(controlValues);
-            Console.WriteLine($"Trying to stop EC2 instance with params:\n{controlValues}");
+            Console.WriteLine($"Trying to stop EC2 instance {controlValues.InstanceId}");
             StopEc2Instance(ec2Client, controlValues.InstanceId);
-            Console.WriteLine("Instance stopped successfully");
+            Console.WriteLine($"Instance {controlValues.InstanceId} stopped successfully");
         }
 
         public InstanceState GetInstanceState(ControlValues controlValues)
         {
             var ec2Client = GetEc2ClientWithControlValues(controlValues);
-            Console.WriteLine($"Trying to get EC2 instance state with params:\n{controlValues}");
+            Console.WriteLine($"Trying to get EC2 instance {controlValues.InstanceId} state");
             var request = new DescribeInstanceStatusRequest
             {
                 IncludeAllInstances = true,
@@ -42,7 +42,7 @@ namespace EC2Manager
             };
             var result = ec2Client.DescribeInstanceStatusAsync(request).ConfigureAwait(false).GetAwaiter().GetResult();
             var instanceState = (InstanceState)result.InstanceStatuses[0].InstanceState.Code;
-            Console.WriteLine($"Instance state: {instanceState}");
+            Console.WriteLine($"Instance {controlValues.InstanceId} state: {instanceState}");
             return instanceState;
         }
 

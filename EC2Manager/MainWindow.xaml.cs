@@ -1,6 +1,5 @@
 ﻿using Amazon;
 using System;
-using System.Drawing;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -27,7 +26,7 @@ namespace EC2Manager
             SetConsoleOutputter();
             SetRegionControlOptions();
             LoadControlValuesIfAvailable();
-            SetupStatusTimer();
+            StartStatusTimer();
         }
 
         private void SetConsoleOutputter()
@@ -39,12 +38,13 @@ namespace EC2Manager
         #region click handlers
         private void Start_Click(object sender, RoutedEventArgs e)
         {
-            StartButton.Dispatcher.BeginInvoke(DispatcherPriority.Normal,new StartDelegate(() => {
+            StartButton.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new StartDelegate(() =>
+            {
                 try
                 {
                     var controlValues = GetControlValuesFromControls();
                     ec2Accessor.StartEc2InstanceAndLog(controlValues);
-                    StatusDispatchAction(this, null);
+                    StartStatusTimer();
                 }
                 catch (Exception error)
                 {
@@ -55,12 +55,13 @@ namespace EC2Manager
 
         private void Stop_Click(object sender, RoutedEventArgs e)
         {
-            StopButton.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new StopDelegate(() => {
+            StopButton.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new StopDelegate(() =>
+            {
                 try
                 {
                     var controlValues = GetControlValuesFromControls();
                     ec2Accessor.StopEc2InstanceAndLog(controlValues);
-                    StatusDispatchAction(this, null);
+                    StartStatusTimer();
                 }
                 catch (Exception error)
                 {
@@ -71,11 +72,12 @@ namespace EC2Manager
         #endregion
 
         #region status polling
-        private void SetupStatusTimer()
+        private void StartStatusTimer()
         {
+            StatusDispatchAction(this, null);
             statusTimer = new DispatcherTimer();
             statusTimer.Tick += new EventHandler(StatusDispatchAction);
-            statusTimer.Interval = new TimeSpan(0, 0, 10);
+            statusTimer.Interval = new TimeSpan(0, 0, 30);
             statusTimer.Start();
         }
 
@@ -93,8 +95,8 @@ namespace EC2Manager
             var brush = new SolidColorBrush();
             brush.Color = instanceState switch
             {
-                InstanceState.Pending or 
-                InstanceState.ShuttingDown or 
+                InstanceState.Pending or
+                InstanceState.ShuttingDown or
                 InstanceState.Stopping => Color.FromRgb(255, 255, 0),
                 InstanceState.Running => Color.FromRgb(0, 255, 0),
                 _ => Color.FromRgb(255, 0, 0),
