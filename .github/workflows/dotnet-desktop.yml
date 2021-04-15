@@ -54,14 +54,10 @@ jobs:
         
     - name: Create release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: ncipollo/release-action@v1
       with:
-        tag_name: ${{ github.ref }} ${{ github.run_number }}
-        release_name: Release ${{ github.run_number }}
-        draft: false
-        prerelease: false
+        artifacts: "D:\\a\\EC2Manager\\EC2Manager\\EC2Manager\\bin\\Release\\net5.0-windows\\EC2Manager.zip"
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Update release asset
       id: upload-release-asset
