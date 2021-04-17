@@ -1,6 +1,6 @@
 ﻿using Amazon;
+using EC2Manager.Extensions;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -20,36 +20,31 @@ namespace EC2Manager
             InitializeComponent();
             Window.Dispatcher.InvokeAsync(async () =>
             {
-                await Window_Initialized();
+                await WindowInitializedAsync();
             });
         }
 
-        private async Task Window_Initialized()
+        private async Task WindowInitializedAsync()
         {
             ec2Accessor = new EC2Accessor();
             controlPersistence = new ControlPersistence<ControlValues>();
-            SetConsoleOutputter();
-            SetRegionControlOptions();
-            await LoadControlValuesIfAvailable();
-            await StartStatusTimer();
-        }
-
-        private void SetConsoleOutputter()
-        {
-            var outputter = new TextBoxOutputter(ConsoleOutput);
-            Console.SetOut(outputter);
+            ConsoleOutput.SetAsConsoleOutput();
+            Region.AddItems(EC2Accessor.AvailableRegions);
+            await LoadControlValuesIfAvailableAsync();
+            await StartStatusTimerAsync();
         }
 
         #region click handlers
+
         private void Start_Click(object sender, RoutedEventArgs e)
         {
             StartButton.Dispatcher.InvokeAsync(async () =>
             {
                 try
                 {
-                    var controlValues = await GetControlValuesFromControls();
-                    ec2Accessor.StartEc2InstanceAndLog(controlValues);
-                    await StartStatusTimer();
+                    var controlValues = await GetControlValuesFromControlsAsync();
+                    await ec2Accessor.StartEc2InstanceAsync(controlValues);
+                    await StartStatusTimerAsync();
                 }
                 catch (Exception error)
                 {
@@ -64,9 +59,9 @@ namespace EC2Manager
             {
                 try
                 {
-                    var controlValues = await GetControlValuesFromControls();
-                    ec2Accessor.StopEc2InstanceAndLog(controlValues);
-                    await StartStatusTimer();
+                    var controlValues = await GetControlValuesFromControlsAsync();
+                    await ec2Accessor.StopEc2InstanceAsync(controlValues);
+                    await StartStatusTimerAsync();
                 }
                 catch (Exception error)
                 {
@@ -74,43 +69,65 @@ namespace EC2Manager
                 }
             }, DispatcherPriority.Normal);
         }
-        #endregion
+
+        #endregion click handlers
 
         #region status polling
-        private async Task StartStatusTimer()
+
+        private async Task StartStatusTimerAsync()
         {
-            await StatusDispatchAction(this, null);
+            await GetStatusAndIp(this, null);
             statusTimer = new DispatcherTimer();
-            statusTimer.Tick += async (s,e) => { await StatusDispatchAction(s, e); };
+            statusTimer.Tick += async (s, e) => { await GetStatusAndIp(s, e); };
             statusTimer.Interval = new TimeSpan(0, 0, 30);
             statusTimer.Start();
         }
 
-        private async Task StatusDispatchAction(object sender, EventArgs e)
+        private async Task GetStatusAndIp(object sender, EventArgs e)
         {
-            var controlValues = await GetControlValuesFromControls();
-            LoadingSpinner.Visibility = Visibility.Visible;
-            var result = ec2Accessor.GetInstanceState(controlValues);
-            LoadingSpinner.Visibility = Visibility.Hidden;
+            var controlValues = await GetControlValuesFromControlsAsync();
+            var result = await ec2Accessor.GetInstanceStateAsyncAndLog(controlValues);
             SetIndicatorColorFromInstanceState(result);
+            SetLoadingSpinnerVisibility(result);
+
+            if (result == InstanceState.Running)
+            {
+                await ec2Accessor.LogPublicIpAsync(controlValues);
+            }
+        }
+
+        private void SetLoadingSpinnerVisibility(InstanceState result)
+        {
+            if (result == InstanceState.Pending || result == InstanceState.ShuttingDown || result == InstanceState.Stopping)
+            {
+                LoadingSpinner.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                LoadingSpinner.Visibility = Visibility.Hidden;
+            }
         }
 
         private void SetIndicatorColorFromInstanceState(InstanceState instanceState)
         {
-            var brush = new SolidColorBrush();
-            brush.Color = instanceState switch
+            var brush = new SolidColorBrush
             {
-                InstanceState.Pending or
-                InstanceState.ShuttingDown or
-                InstanceState.Stopping => Color.FromRgb(255, 255, 0),
-                InstanceState.Running => Color.FromRgb(0, 255, 0),
-                _ => Color.FromRgb(255, 0, 0),
+                Color = instanceState switch
+                {
+                    InstanceState.Pending or
+                    InstanceState.ShuttingDown or
+                    InstanceState.Stopping => Color.FromRgb(255, 255, 0),
+                    InstanceState.Running => Color.FromRgb(0, 255, 0),
+                    _ => Color.FromRgb(255, 0, 0),
+                }
             };
             InstanceStateIndicator.Fill = brush;
         }
-        #endregion
+
+        #endregion status polling
 
         #region control value stuff
+
         private void SetControlFromControlValues(ControlValues controlValues)
         {
             InstanceID.Text = controlValues.InstanceId;
@@ -119,7 +136,7 @@ namespace EC2Manager
             SecretKey.Text = controlValues.SecretKey;
         }
 
-        private async Task<ControlValues> GetControlValuesFromControls()
+        private async Task<ControlValues> GetControlValuesFromControlsAsync()
         {
             var controlValues = new ControlValues
             {
@@ -133,7 +150,7 @@ namespace EC2Manager
             return controlValues;
         }
 
-        private async Task LoadControlValuesIfAvailable()
+        private async Task LoadControlValuesIfAvailableAsync()
         {
             var controlValues = await controlPersistence.Read();
             if (controlValues != null)
@@ -146,14 +163,6 @@ namespace EC2Manager
             }
         }
 
-        private void SetRegionControlOptions()
-        {
-            var allAvailableRegions = ec2Accessor.availableRegions;
-            allAvailableRegions.ToList().ForEach(region =>
-            {
-                Region.Items.Add(region);
-            });
-        }
-        #endregion
+        #endregion control value stuff
     }
 }

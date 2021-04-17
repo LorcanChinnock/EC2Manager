@@ -7,22 +7,17 @@ namespace EC2Manager
 {
     public class ControlPersistence<T> where T : class
     {
-        private readonly string _filePath;
-
-        public ControlPersistence()
-        {
-            _filePath = GetLocalFilePath();
-        }
+        private readonly string fileName = "ControlValues.json";
 
         public async Task Write(T objectToWrite, bool append = false)
         {
-            using Stream stream = File.Open(_filePath, FileMode.OpenOrCreate);
+            using var stream = File.Open(GetLocalFilePath(), FileMode.OpenOrCreate);
             await JsonSerializer.SerializeAsync(stream, objectToWrite);
         }
 
         public async Task<T> Read()
         {
-            using Stream stream = File.Open(_filePath, FileMode.OpenOrCreate);
+            using var stream = File.Open(GetLocalFilePath(), FileMode.OpenOrCreate);
             try
             {
                 return await JsonSerializer.DeserializeAsync<T>(stream);
@@ -33,11 +28,11 @@ namespace EC2Manager
             }
         }
 
-        private static string GetLocalFilePath()
+        private string GetLocalFilePath()
         {
-            var fileName = "ControlValues.json";
-            string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            return Path.Combine(projectPath, fileName);
+            var projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var filePath = Path.Combine(projectPath, fileName);
+            return filePath;
         }
     }
 }

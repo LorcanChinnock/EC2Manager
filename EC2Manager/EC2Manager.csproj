@@ -9,8 +9,8 @@
     <Description>Small WPF application for easily managing simple EC2 tasks</Description>
     <PackageLicenseExpression>Apache License, Version 2.0</PackageLicenseExpression>
     <StartupObject>EC2Manager.App</StartupObject>
-    <ApplicationIcon>aws-ec2.ico</ApplicationIcon>
-    <PackageIcon>ec2icon.png</PackageIcon>
+    <ApplicationIcon>Assets\aws-ec2.ico</ApplicationIcon>
+    <PackageIcon>Assets\ec2icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/LorcanChinnock/EC2Manager</RepositoryUrl>
   </PropertyGroup>
 
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="ec2icon.png">
+    <None Update="Assets\ec2icon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
