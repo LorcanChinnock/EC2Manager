@@ -11,7 +11,7 @@ namespace EC2Manager
     {
         public static IEnumerable<RegionEndpoint> AvailableRegions => RegionEndpoint.EnumerableAllRegions;
 
-        private string lastConsoleMessage;
+        private string lastStatusMessage;
 
         public async Task StartEc2InstanceAsync(ControlValues controlValues)
         {
@@ -34,7 +34,7 @@ namespace EC2Manager
         public async Task<InstanceState> GetInstanceStateAsyncAndLog(ControlValues controlValues)
         {
             var instanceState = await GetInstanceStateAsync(controlValues);
-            LogIfDifferent($"Instance {controlValues.InstanceId} state: {instanceState}");
+            LogStatusMessage($"Instance {controlValues.InstanceId} state: {instanceState}");
             return instanceState;
         }
 
@@ -42,7 +42,7 @@ namespace EC2Manager
         {
             await GetPublicIpAsync(controlValues).ContinueWith(async ip =>
             {
-                LogIfDifferent($"Public ip is: {await ip}");
+                Console.WriteLine($"Public ip is: {await ip}");
             });
         }
 
@@ -95,12 +95,12 @@ namespace EC2Manager
         private AmazonEC2Client GetEc2ClientWithControlValues(ControlValues controlValues) =>
             new(controlValues.AccessKey, controlValues.SecretKey, GetRegionBySystemName(controlValues.RegionSystemName));
 
-        private void LogIfDifferent(string message)
+        private void LogStatusMessage(string message)
         {
-            if (lastConsoleMessage != message)
+            if (lastStatusMessage != message)
             {
                 Console.WriteLine(message);
-                lastConsoleMessage = message;
+                lastStatusMessage = message;
             }
         }
     }
