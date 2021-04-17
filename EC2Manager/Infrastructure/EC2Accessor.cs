@@ -1,6 +1,7 @@
 ﻿using Amazon;
 using Amazon.EC2;
 using Amazon.EC2.Model;
+using EC2Manager.Model;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,7 +12,10 @@ namespace EC2Manager
     {
         public static IEnumerable<RegionEndpoint> AvailableRegions => RegionEndpoint.EnumerableAllRegions;
 
-        private string lastStatusMessage;
+        private Dictionary<EC2AccessorMessageTypes, string> lastMessageDictionary = new Dictionary<EC2AccessorMessageTypes, string> {
+            { EC2AccessorMessageTypes.Status, null },
+            { EC2AccessorMessageTypes.Ip, null}
+        };
 
         public async Task StartEc2InstanceAsync(ControlValues controlValues)
         {
@@ -34,7 +38,7 @@ namespace EC2Manager
         public async Task<InstanceState> GetInstanceStateAsyncAndLog(ControlValues controlValues)
         {
             var instanceState = await GetInstanceStateAsync(controlValues);
-            LogStatusMessage($"Instance {controlValues.InstanceId} state: {instanceState}");
+            LogMessage(EC2AccessorMessageTypes.Status, $"Instance {controlValues.InstanceId} state: {instanceState}");
             return instanceState;
         }
 
@@ -42,7 +46,7 @@ namespace EC2Manager
         {
             await GetPublicIpAsync(controlValues).ContinueWith(async ip =>
             {
-                Console.WriteLine($"Public ip is: {await ip}");
+                LogMessage(EC2AccessorMessageTypes.Ip, $"Public ip is: {await ip}");
             });
         }
 
@@ -95,12 +99,12 @@ namespace EC2Manager
         private AmazonEC2Client GetEc2ClientWithControlValues(ControlValues controlValues) =>
             new(controlValues.AccessKey, controlValues.SecretKey, GetRegionBySystemName(controlValues.RegionSystemName));
 
-        private void LogStatusMessage(string message)
+        private void LogMessage(EC2AccessorMessageTypes type, string message)
         {
-            if (lastStatusMessage != message)
+            if (lastMessageDictionary[type] != message)
             {
                 Console.WriteLine(message);
-                lastStatusMessage = message;
+                lastMessageDictionary[type] = message;
             }
         }
     }
